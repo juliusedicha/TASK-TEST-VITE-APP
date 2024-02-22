@@ -14,7 +14,26 @@ export default function MkdSDK() {
   };
   
   this.login = async function (email, password, role) {
-    //TODO
+    const url = this._baseurl + "/v1/api/auth/login";
+    const payload = { email, password, role };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-project": base64Encode,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Login failed");
+    }
+
+    const responseData = await response.json();
+    localStorage.setItem("token", responseData.token);
+    return responseData;
   };
 
   this.getHeader = function () {
@@ -86,9 +105,30 @@ export default function MkdSDK() {
     }
   };  
 
+
   this.check = async function (role) {
-    //TODO
+    const url = this._baseurl + "/v1/api/auth/check";
+    const payload = { role };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-project": base64Encode,
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Check failed");
+    }
+
+    const responseData = await response.json();
+    return responseData;
   };
 
   return this;
 }
+

@@ -1,49 +1,63 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AuthContext } from "./authContext";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import SnackBar from "./components/SnackBar";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-function renderRoutes(role) {
-  switch (role) {
-    case "admin":
-      return (
-        <Routes>
-          <Route
-            path="/admin/dashboard"
-            element={<AdminDashboardPage />}
-          ></Route>
-        </Routes>
-      );
-      break;
-    default:
-      return (
-        <Routes>
-          <Route exact path="/admin/login" element={<AdminLoginPage />}></Route>
-          <Route path="*" exact element={<NotFoundPage />}></Route>
-        </Routes>
-      );
-      break;
-  }
-}
-
 function Main() {
-  const { state } = React.useContext(AuthContext);
+  const { state, dispatch } = React.useContext(AuthContext);
+  const navigate = useNavigate(); // Hook for navigation
+
+  // Function to handle logout
+  const handleLogout = () => {
+    // Perform logout actions here
+    dispatch({ type: "LOGOUT" }); // Assuming you have a logout action in your reducer
+    // Redirect to AdminLoginPage
+    navigate('/'); // Redirect to the login page
+  };
+
+  // Effect to show login success Snackbar
+  useEffect(() => {
+    if (state.isAuthenticated) {
+      // Show Snackbar or toast message here
+      // Dispatch an action to set the Snackbar message in your state
+      dispatch({ type: "SET_SNACKBAR_MESSAGE", payload: "Login successful!" });
+    }
+  }, [state.isAuthenticated, dispatch]);
 
   return (
     <div className="h-full">
       <div className="flex w-full">
         <div className="w-full">
           <div className="page-wrapper w-full py-10 px-5">
-            {!state.isAuthenticated
-              ? renderRoutes("none")
-              : renderRoutes(state.role)}
+            <Routes>
+              {/* Redirect to AdminDashboardPage if authenticated */}
+              {state.isAuthenticated && state.role === "admin" ? (
+                <Route path="/" element={<Navigate to="/pages/dashboard" />} />
+              ) : null}
+
+              {/* Define your routes */}
+              <Route path="/pages/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/" element={<AdminLoginPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+
+            {/* Logout button */}
+            {state.isAuthenticated && (
+            
+          
+              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '500' }}>
+              <button onClick={handleLogout}  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">Logout</button>
+            </div>
+            
+          
+          )}
           </div>
         </div>
       </div>
-      <SnackBar />
+      {state.isAuthenticated && <SnackBar />} {/* Render Snackbar component only if authenticated */}
     </div>
   );
 }

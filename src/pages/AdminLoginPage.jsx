@@ -1,21 +1,22 @@
-import React from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import MkdSDK from "../utils/MkdSDK";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../authContext";
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AdminLoginPage = () => {
-  const schema = yup
-    .object({
-      email: yup.string().email().required(),
-      password: yup.string().required(),
-    })
-    .required();
+  const schema = yup.object({
+    email: yup.string().email().required(),
+    password: yup.string().required(),
+  }).required();
 
-  const { dispatch } = React.useContext(AuthContext);
+  const { dispatch } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showSnackbar, setShowSnackbar] = useState(false); // State to manage Snackbar visibility
+
   const {
     register,
     handleSubmit,
@@ -26,11 +27,52 @@ const AdminLoginPage = () => {
   });
 
   const onSubmit = async (data) => {
-    let sdk = new MkdSDK();
-    //TODO
-  };
+    try {
+      const response = await fetch('https://reacttask.mkdlabs.com/v2/api/lambda/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-project': 'cmVhY3R0YXNrOmQ5aGVkeWN5djZwN3p3OHhpMzR0OWJtdHNqc2lneTV0Nw=='
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+          role: 'admin'
+        })
+      });
 
-  return (
+      const responseData = await response.json();
+
+      console.log('Login response:', responseData);
+
+      if (responseData.error === false) {
+        const { token } = responseData;
+
+        console.log('Login successful. Token:', token);
+
+        dispatch({ type: 'LOGIN', payload: { token } });
+
+        setShowSnackbar(true);
+
+        navigate('/pages/dashboard');
+      } else {
+        throw new Error('Invalid credentials');
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setError("email", { message: "Invalid credentials" });
+      setError("password", { message: "Invalid credentials" });
+    }
+  };
+  useEffect(() => {
+    if (showSnackbar) {
+      toast.success('Login successful!', {
+        autoClose: 3000 // Adjust the autoClose duration as needed
+      });
+      setShowSnackbar(false);
+    }
+  }, [showSnackbar]);
+    return (
     <div className="w-full max-w-xs mx-auto">
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -47,7 +89,7 @@ const AdminLoginPage = () => {
             type="email"
             placeholder="Email"
             {...register("email")}
-            className={`"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
               errors.email?.message ? "border-red-500" : ""
             }`}
           />

@@ -1,8 +1,10 @@
 import React from "react";
 import { GlobalContext } from "../globalContext";
+
 const SnackBar = () => {
   const { state, dispatch } = React.useContext(GlobalContext);
   const show = state.globalMessage.length > 0;
+
   return show ? (
     <div
       id="mkd-toast"
