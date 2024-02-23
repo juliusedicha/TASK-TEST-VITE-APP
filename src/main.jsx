@@ -10,13 +10,16 @@ function Main() {
   const { state, dispatch } = React.useContext(AuthContext);
   const navigate = useNavigate(); // Hook for navigation
 
-  // Function to handle logout
-  const handleLogout = () => {
-    // Perform logout actions here
-    dispatch({ type: "LOGOUT" }); // Assuming you have a logout action in your reducer
-    // Redirect to AdminLoginPage
-    navigate('/'); // Redirect to the login page
-  };
+
+  // Effect to check authentication status on page load
+  useEffect(() => {
+    // Check if authentication token exists in localStorage
+    const authToken = localStorage.getItem("authToken");
+    if (authToken) {
+      // Dispatch action to set authentication state
+      dispatch({ type: "LOGIN_SUCCESS", payload: { token: authToken } });
+    }
+  }, [dispatch]);
 
   // Effect to show login success Snackbar
   useEffect(() => {
@@ -44,16 +47,7 @@ function Main() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
 
-            {/* Logout button */}
-            {state.isAuthenticated && (
-            
           
-              <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '500' }}>
-              <button onClick={handleLogout}  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">Logout</button>
-            </div>
-            
-          
-          )}
           </div>
         </div>
       </div>
